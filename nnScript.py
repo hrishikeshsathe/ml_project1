@@ -68,16 +68,20 @@ def preprocess():
     test_temp = []
     train_label_temp = []
     test_label_temp = []
-    
+
     for item in mat:
         if "test" in item:
             for i in range(0, len(mat.get(item))):
+                label = [0 for x in range(0,10)]
+                label[int(item[-1])] = 1
                 test_temp.append(mat.get(item)[i] / 255)
-                test_label_temp.append(item[-1])
+                test_label_temp.append(label)
         elif "train" in item:
             for i in range(0, len(mat.get(item))):
+                label = [0 for x in range(0,10)]
+                label[int(item[-1])] = 1
                 train_temp.append(mat.get(item)[i] / 255)
-                train_label_temp.append(item[-1])
+                train_label_temp.append(label)
 
     '''If a column contains the same elements add it to the to_delete list'''
     to_delete = []
