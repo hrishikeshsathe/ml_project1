@@ -61,8 +61,8 @@ def preprocess():
     mat = loadmat('/home/hrishikesh/Projects/ML/Project1/mnist_all.mat') #loads the MAT object as a Dictionary
     
     '''Split data into temporary arrays - one for training data and 
-    other for test data. Add labels to respective lists. 
-    Labels are in the range 0-9.'''
+       other for test data. Add labels to respective lists. 
+       Labels are in the range 0-9.'''
 
     train_temp = []
     test_temp = []
@@ -79,7 +79,7 @@ def preprocess():
                 train_temp.append(mat.get(item)[i] / 255)
                 train_label_temp.append(item[-1])
 
-    '''if a column contains the same elements add it to the to_delete list'''
+    '''If a column contains the same elements add it to the to_delete list'''
     to_delete = []
     for i in range(0, len(train_temp[0])):
         is_equal = True
@@ -90,31 +90,32 @@ def preprocess():
         if is_equal:
             to_delete.append(i)
 
-    '''delete the columns from the training data. Size reduced from 784 to 717'''
+    '''Delete the columns from the training data. Size reduced from 784 to 717'''
     count = 0
     for i in to_delete:
         train_temp = np.delete(train_temp, i - count, 1)
         count += 1
 
+    '''Get the size of the input and generate an array of size = size_of_input with 
+       elements in a random permutation in range(0, size_of_input).
+       Example - size_of_input = 5. aperm = [3,1,2,0,4]'''
 
-    ''''''
-    train_data = np.array(train_temp)
-    a = range(train_data.shape[0])
-    aperm = np.random.permutation(a)
-    A1 = train_data[aperm[0:10],:]
-    A2 = train_data[aperm[10:100],:]
-    
-    train_label = np.array(train_label_temp)
-    validation_data = np.array([])
-    validation_label = np.array([])
+    size_of_input = range(train_temp.shape[0])
+    aperm = np.random.permutation(size_of_input)
+
+    '''Use the aperm array to split training data into training and validation data.
+       Do the same for labels'''
+
+    train_data = np.array(train_temp[aperm[10:100],:])
+    train_label = np.array([train_label_temp[x] for x in aperm[10:100]])
+    validation_data = np.array(train_temp[aperm[0:10],:])
+    validation_label = np.array([train_label_temp[x] for x in aperm[0:10]])
     test_data = np.array(test_temp)
     test_label = np.array(test_label_temp)
     
     return train_data, train_label, validation_data, validation_label, test_data, test_label
     
-    
-    
-
+  
 def nnObjFunction(params, *args):
     """% nnObjFunction computes the value of objective function (negative log 
     %   likelihood error function with regularization) given the parameters 
