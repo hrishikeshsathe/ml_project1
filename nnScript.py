@@ -1,3 +1,4 @@
+
 from __future__ import division
 import numpy as np
 from scipy.optimize import minimize
@@ -26,8 +27,8 @@ def sigmoid(z):
     
     """# Notice that z can be a scalar, a vector or a matrix
     # return the sigmoid of input z"""
-    
-    return  #your code here
+    output=(1.0 / (1.0 + np.exp(-z)))
+    return output#your code here
     
     
 
@@ -58,7 +59,7 @@ def preprocess():
      - normalize the data to [0, 1]
      - feature selection"""
     
-    mat = loadmat('/home/hrishikesh/Projects/ML/Project1/mnist_all.mat') #loads the MAT object as a Dictionary
+    mat = loadmat('E:\ML\PA1\Project 1\mnist_all.mat') #loads the MAT object as a Dictionary
     
     '''Split data into temporary arrays - one for training data and 
        other for test data. Add labels to respective lists. 
