@@ -2,8 +2,12 @@
 from __future__ import division
 import numpy as np
 from scipy.optimize import minimize
+from scipy.optimize import check_grad
 from scipy.io import loadmat
 from math import sqrt
+import time
+
+countNn = 0
 
 def initializeWeights(n_in,n_out):
     """
@@ -59,6 +63,8 @@ def preprocess():
      - feature selection"""
 
 
+    start = time.clock()
+    print "Preprocessing started."
     input_file = '/home/hrishikesh/Projects/ML/Project1/mnist_all.mat'
     #input_file = 'E:\ML\PA1\Project 1\mnist_all.mat'
     mat = loadmat(input_file) #loads the MAT object as a Dictionary
@@ -113,13 +119,16 @@ def preprocess():
     '''Use the aperm array to split training data into training and validation data.
        Do the same for labels'''
 
-    train_data = np.array(train_temp[aperm[10:100],:])
-    train_label = np.array([train_label_temp[x] for x in aperm[10:100]])
-    validation_data = np.array(train_temp[aperm[0:10],:])
-    validation_label = np.array([train_label_temp[x] for x in aperm[0:10]])
+    train_data = np.array(train_temp[aperm[2:10],:])
+    train_label = np.array([train_label_temp[x] for x in aperm[2:10]])
+    validation_data = np.array(train_temp[aperm[0:2],:])
+    validation_label = np.array([train_label_temp[x] for x in aperm[0:2]])
     test_data = np.array(test_temp)
     test_label = np.array(test_label_temp)
     
+    end = time.clock()
+    print "Preprocessing completed"
+    print "Time taken: %f" % (end - start)    
     return train_data, train_label, validation_data, validation_label, test_data, test_label
     
   
@@ -161,41 +170,82 @@ def nnObjFunction(params, *args):
     %     w2(i, j) represents the weight of connection from unit j in hidden 
     %     layer to unit i in output layer."""
     
+    global countNn
+    countNn += 1
     n_input, n_hidden, n_class, training_data, training_label, lambdaval = args
     
     w1 = params[0:n_hidden * (n_input + 1)].reshape( (n_hidden, (n_input + 1)))
     w2 = params[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))
     obj_val = 0
     
-    grad_w1 = [][]
-    grad_w2 = [][]
+    grad_w1 = [[0.0 for j in range(0, w1.shape[1])] for i in range(0, n_hidden)]
+    grad_w2 = [[0.0 for j in range(0, n_hidden + 1)] for i in range(0, n_class)]
 
 
-    #Your code here
-    for i in range(0, training_data.shape[0]):    
-        temp = training_data[i]
-        temp = np.append(temp, 1)
-        w1Tx = np.array([])
-        for j in range(0, w1.shape[0]):
-            z = sigmoid(np.dot(temp, w1[j]))
-            w1Tx = np.append(w1Tx, z)
-        w1Tx = np.append(w1Tx, 1)
-        output = np.array([])
-        for k in range(0, w2.shape[0]):
-            out = 0
-            for l in range(0, w2.shape[1]):
-                out += w1Tx[l] * w2[k][l]
-            out = sigmoid(out)
-            output = np.append(output, out)
-        # for l in range(0, len(output)):
-        #     delta_l = output[l] - training_label[i][l]
-                
-    
+    number_of_training_data = training_data.shape[0]
+
+    for i in range(0, number_of_training_data):    
+        
+        # d attributes in example (x). d = 717
+        example = training_data[i]
+
+        # Add bias node to make it d + 1 = 718
+        example = np.append(example, 1)
+        
+        # Calculate output of hidden nodes. Calculated using w1T.x
+        # Gives a 50x1 array. Add bias node to give 51x1 array
+        output_of_hidden = np.array([])
+        for j in range(0, n_hidden):
+            z = sigmoid(np.dot(example, w1[j]))
+            output_of_hidden = np.append(output_of_hidden, z)
+        output_of_hidden = np.append(output_of_hidden, 1)
+        
+        # Calculate output of classification. Gives a 10x1 array.
+        output_of_class = np.array([])
+        for k in range(0, n_class):
+            b = 0
+            for l in range(0, n_hidden + 1):
+                b += output_of_hidden[l] * w2[k][l]
+            o = sigmoid(b)
+            output_of_class = np.append(output_of_class, o)
+
+        # Calculate gradient of w2 - shape - 10x51
+        for l in range(0, len(output_of_class)):
+            delta_l = output_of_class[l] - training_label[i][l]
+            for m in range(0, output_of_hidden.shape[0]):
+                grad_w2[l][m] += delta_l * output_of_hidden[m]
+        
+        #Calculate gradient of w1 - shape - 50x718
+        for j in range(0, n_hidden):
+            sum_k = 0
+            for l in range(0, n_class):
+                sum_k += (output_of_class[l] - training_label[i][l]) * w2[l][j]
+            for p in range(0, n_input + 1):
+                grad_w1[j][p] += (1 - output_of_hidden[j]) * output_of_hidden[j] * sum_k * example[p]
+
+
+    '''Divide each element in the gradient matrix by number of examples'''
+
+    for i in range(0, len(grad_w2)):
+        for j in range(0, len(grad_w2[0])):
+            grad_w2[i][j] += (lambdaval * w2[i][j])
+            grad_w2[i][j] /= number_of_training_data
+
+    for i in range(0, len(grad_w1)):
+        for j in range(0, len(grad_w1[0])):
+            grad_w1[i][j] += (lambdaval * w1[i][j])
+            grad_w1[i][j] /= number_of_training_data
+
+
+    grad_w1 = np.array(grad_w1)
+    grad_w2 = np.array(grad_w2)
+
+
     #Make sure you reshape the gradient matrices to a 1D array. for instance if your gradient matrices are grad_w1 and grad_w2
     #you would use code similar to the one below to create a flat array
     #obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()),0)
-    obj_grad = np.array([])
-    
+    obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()),0)
+
     return (obj_val,obj_grad)
 
 
@@ -247,8 +297,7 @@ initial_w2 = initializeWeights(n_hidden, n_class);
 initialWeights = np.concatenate((initial_w1.flatten(), initial_w2.flatten()),0)
 
 # set the regularization hyper-parameter
-lambdaval = 0;
-
+lambdaval = 0.1;
 
 args = (n_input, n_hidden, n_class, train_data, train_label, lambdaval)
 
@@ -256,7 +305,17 @@ args = (n_input, n_hidden, n_class, train_data, train_label, lambdaval)
 
 opts = {'maxiter' : 50}    # Preferred value.
 
+start = time.clock()
+print "\nMinimize started."
+
 nn_params = minimize(nnObjFunction, initialWeights, jac=True, args=args,method='CG', options=opts)
+
+print "Minimize finished."
+end = time.clock()
+print "Time taken: %f" % (end-start)
+print "\nNumber of iterations: %d" % countNn
+print nn_params.success
+print nn_params.message
 
 #In Case you want to use fmin_cg, you may have to split the nnObjectFunction to two functions nnObjFunctionVal
 #and nnObjGradient. Check documentation for this function before you proceed.
@@ -266,9 +325,6 @@ nn_params = minimize(nnObjFunction, initialWeights, jac=True, args=args,method='
 #Reshape nnParams from 1D vector into w1 and w2 matrices
 w1 = nn_params.x[0:n_hidden * (n_input + 1)].reshape( (n_hidden, (n_input + 1)))
 w2 = nn_params.x[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))
-
-
-#Test the computed parameters
 
 predicted_label = nnPredict(w1,w2,train_data)
 
