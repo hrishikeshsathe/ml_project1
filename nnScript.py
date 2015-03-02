@@ -202,18 +202,18 @@ def nnObjFunction(params, *args):
         
         # Calculate output of classification. Gives a 10x1 array.
         output_of_class = np.array([])
-        for k in range(0, n_class):
+        for l in range(0, n_class):
             b = 0
-            for l in range(0, n_hidden + 1):
-                b += output_of_hidden[l] * w2[k][l]
+            for j in range(0, n_hidden + 1):
+                b += output_of_hidden[j] * w2[l][j]
             o = sigmoid(b)
             output_of_class = np.append(output_of_class, o)
 
         # Calculate gradient of w2 - shape - 10x51
-        for l in range(0, len(output_of_class)):
+        for l in range(0, n_class):
             delta_l = output_of_class[l] - training_label[i][l]
-            for m in range(0, output_of_hidden.shape[0]):
-                grad_w2[l][m] += delta_l * output_of_hidden[m]
+            for j in range(0, n_hidden + 1):
+                grad_w2[l][j] += delta_l * output_of_hidden[j]
         
         #Calculate gradient of w1 - shape - 50x718
         for j in range(0, n_hidden):
@@ -239,7 +239,6 @@ def nnObjFunction(params, *args):
 
     grad_w1 = np.array(grad_w1)
     grad_w2 = np.array(grad_w2)
-
 
     #Make sure you reshape the gradient matrices to a 1D array. for instance if your gradient matrices are grad_w1 and grad_w2
     #you would use code similar to the one below to create a flat array
