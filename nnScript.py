@@ -22,17 +22,16 @@ def initializeWeights(n_in,n_out):
     return W
     
     
-    
 def sigmoid(z):
-    
     """# Notice that z can be a scalar, a vector or a matrix
     # return the sigmoid of input z"""
-    output=(1.0 / (1.0 + np.exp(-z)))
-    return output#your code here
-    
-    
 
+    sigmoid_of_z = (1.0 / (1.0 + np.exp(-z)))
+    return sigmoid_of_z
+    
+    
 def preprocess():
+
     """ Input:
      Although this function doesn't have any input, you are required to load
      the MNIST data set from file 'mnist_all.mat'.
@@ -58,8 +57,11 @@ def preprocess():
            function
      - normalize the data to [0, 1]
      - feature selection"""
-    
-    mat = loadmat('E:\ML\PA1\Project 1\mnist_all.mat') #loads the MAT object as a Dictionary
+
+
+    input_file = '/home/hrishikesh/Projects/ML/Project1/mnist_all.mat'
+    #input_file = 'E:\ML\PA1\Project 1\mnist_all.mat'
+    mat = loadmat(input_file) #loads the MAT object as a Dictionary
     
     '''Split data into temporary arrays - one for training data and 
        other for test data. Add labels to respective lists. 
@@ -163,16 +165,31 @@ def nnObjFunction(params, *args):
     
     w1 = params[0:n_hidden * (n_input + 1)].reshape( (n_hidden, (n_input + 1)))
     w2 = params[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))
-    obj_val = 0  
+    obj_val = 0
     
+    grad_w1 = [][]
+    grad_w2 = [][]
+
+
     #Your code here
-    #
-    #
-    #
-    #
-    #
-    
-    
+    for i in range(0, training_data.shape[0]):    
+        temp = training_data[i]
+        temp = np.append(temp, 1)
+        w1Tx = np.array([])
+        for j in range(0, w1.shape[0]):
+            z = sigmoid(np.dot(temp, w1[j]))
+            w1Tx = np.append(w1Tx, z)
+        w1Tx = np.append(w1Tx, 1)
+        output = np.array([])
+        for k in range(0, w2.shape[0]):
+            out = 0
+            for l in range(0, w2.shape[1]):
+                out += w1Tx[l] * w2[k][l]
+            out = sigmoid(out)
+            output = np.append(output, out)
+        # for l in range(0, len(output)):
+        #     delta_l = output[l] - training_label[i][l]
+                
     
     #Make sure you reshape the gradient matrices to a 1D array. for instance if your gradient matrices are grad_w1 and grad_w2
     #you would use code similar to the one below to create a flat array
@@ -180,7 +197,6 @@ def nnObjFunction(params, *args):
     obj_grad = np.array([])
     
     return (obj_val,obj_grad)
-
 
 
 def nnPredict(w1,w2,data):
@@ -205,8 +221,6 @@ def nnPredict(w1,w2,data):
     #Your code here
     
     return labels
-    
-
 
 
 """**************Neural Network Script Starts here********************************"""
